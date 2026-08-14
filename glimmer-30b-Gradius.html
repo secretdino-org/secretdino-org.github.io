@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gradius Clone</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family: monospace;}
+  canvas{display:block;}
+  #hud{position:absolute;top:10px;left:10px;color:#0f0;font-size:14px;text-shadow:0 0 4px #0f0;}
+  #help{position:absolute;bottom:10px;left:10px;color:#aaa;font-size:12px;}
+</style>
+</head>
+<body>
+<div id="hud"></div>
+<div id="help">WASD/Arrows Move | Space Shoot | P Power | R Restart</div>
+<canvas id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
+addEventListener('resize',()=>{W=canvas.width=innerWidth;H=canvas.height=innerHeight;});
+
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true; if(e.code==='Space') e.preventDefault();});
+addEventListener('keyup',e=>keys[e.code]=false);
+
+const player = {
+  x:100, y:H/2, w:32, h:24, speed:6, lives:3, power:0,
+  color:'#0ff'
+};
+
+let bullets=[], enemies=[], particles=[], stars=[], powerups=[], score=0, gameOver=false;
+
+function rand(a,b){return Math.random()*(b-a)+a;}
+
+function initStars(){
+  stars=[];
+  for(let i=0;i<200;i++) stars.push({x:rand(0,W),y:rand(0,H),s:rand(0.5,2),z:rand(0.2,1)});
+}
+initStars();
+
+function spawnEnemy(){
+  const types=['basic','zig','boss'];
+  const t = Math.random()<0.8?'basic':Math.random()<0.9?'zig':'boss';
+  enemies.push({
+    x:W+50, y:rand(50,H-50), w:t==='boss'?80:28, h:t==='boss'?80:28,
+    type:t, vy:rand(-1,1), hp:t==='boss'?10:1, speed:rand(1,2.5)
+  });
+}
+
+function spawnPower(){
+  if(Math.random()<0.01){
+    powerups.push({x:W+30,y:rand(80,H-80),w:18,h:18,type:Math.floor(rand(0,3))});
+  }
+}
+
+function reset(){
+  player.x=100; player.y=H/2; player.lives=3; player.power=0;
+  bullets=[]; enemies=[]; particles=[]; powerups=[]; score=0; gameOver=false;
+  initStars();
+}
+
+function update(){
+  if(gameOver) return;
+
+  // background
+  stars.forEach(s=>{s.x-=s.z*2; if(s.x<0){s.x=W; s.y=rand(0,H);}});
+
+  // input
+  let dx=0,dy=0;
+  if(keys['ArrowLeft']||keys['KeyA']) dx=-1;
+  if(keys['ArrowRight']||keys['KeyD']) dx=1;
+  if(keys['ArrowUp']||keys['KeyW']) dy=-1;
+  if(keys['ArrowDown']||keys['KeyS']) dy=1;
+  player.x+=dx*player.speed;
+  player.y+=dy*player.speed;
+  player.x=Math.max(20,Math.min(W-120,player.x));
+  player.y=Math.max(20,Math.min(H-20,player.y));
+
+  if(keys['Space'] && !keys._shot){
+    shoot();
+    keys._shot=true;
+  }
+  if(!keys['Space']) keys._shot=false;
+
+  if(keys['KeyP'] && !keys._p){ player.power=(player.power+1)%4; keys._p=true;}
+  if(!keys['KeyP']) keys._p=false;
+
+  // bullets
+  bullets.forEach(b=>b.x+=b.speed);
+  bullets=bullets.filter(b=>b.x<W+50);
+
+  // enemies
+  if(Math.random()<0.03) spawnEnemy();
+  spawnPower();
+  enemies.forEach(e=>{
+    e.x-=e.speed;
+    if(e.type==='zig') e.y+=Math.sin(Date.now()/200+e.x)*1.5;
+    e.y+=e.vy;
+    e.y=Math.max(20,Math.min(H-20,e.y));
+  });
+  enemies=enemies.filter(e=>e.x>-100);
+
+  // powerups
+  powerups.forEach(p=>p.x-=2);
+  powerups=powerups.filter(p=>p.x>-30);
+
+  // collisions bullet-enemy
+  bullets.forEach((b,bi)=>{
+    enemies.forEach((e,ei)=>{
+      if(b.x>e.x && b.x<e.x+e.w && b.y>e.y && b.y<e.y+e.h){
+        e.hp--;
+        bullets.splice(bi,1);
+        spawnParticles(e.x+e.w/2,e.y+e.h/2,'#f80');
+        if(e.hp<=0){
+          enemies.splice(ei,1);
+          score+=e.type==='boss'?500:e.type==='zig'?100:20;
+        }
+      }
+    });
+  });
+
+  // player-enemy
+  enemies.forEach(e=>{
+    if(player.x<e.x+e.w && player.x+player.w>e.x && player.y<e.y+e.h && player.y+player.h>e.y){
+      player.lives--; spawnParticles(player.x,player.y,'#fff');
+      enemies.splice(enemies.indexOf(e),1);
+      if(player.lives<=0){ gameOver=true; }
+    }
+  });
+
+  // powerup collect
+  powerups.forEach((p,pi)=>{
+    if(player.x< p.x+p.w && player.x+player.w>p.x && player.y< p.y+p.h && player.y+player.h>p.y){
+      player.power=p.type;
+      powerups.splice(pi,1);
+    }
+  });
+
+  // particles
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;});
+  particles=particles.filter(p=>p.life>0);
+}
+
+function shoot(){
+  const baseY=player.y+player.h/2;
+  if(player.power===0){ bullets.push({x:player.x+player.w,y:baseY,speed:12}); }
+  else if(player.power===1){ bullets.push({x:player.x+player.w,y:baseY-8,speed:12}); bullets.push({x:player.x+player.w,y:baseY+8,speed:12}); }
+  else if(player.power===2){ for(let i=-1;i<=1;i++) bullets.push({x:player.x+player.w,y:baseY+i*10,speed:12}); }
+  else { for(let i=-2;i<=2;i++) bullets.push({x:player.x+player.w,y:baseY+i*8,speed:12}); }
+}
+
+function spawnParticles(x,y,col){
+  for(let i=0;i<12;i++) particles.push({x,y,vx:rand(-3,3),vy:rand(-3,3),life:30,col});
+}
+
+function draw(){
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  // stars
+  ctx.fillStyle='#fff';
+  stars.forEach(s=>{ctx.globalAlpha=s.s/2; ctx.fillRect(s.x,s.y,s.s,s.s);});
+  ctx.globalAlpha=1;
+
+  // player
+  ctx.fillStyle=player.color;
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+  ctx.fillStyle='#0ff'; ctx.fillRect(player.x+4,player.y+4,24,16);
+
+  // bullets
+  ctx.fillStyle='#ff0';
+  bullets.forEach(b=>ctx.fillRect(b.x,b.y,6,3));
+
+  // enemies
+  enemies.forEach(e=>{
+    ctx.fillStyle=e.type==='boss'?'#f00':e.type==='zig'?'#fa0':'#f0f';
+    ctx.fillRect(e.x,e.y,e.w,e.h);
+  });
+
+  // powerups
+  powerups.forEach(p=>{
+    ctx.fillStyle=['#0f0','#0ff','#ff0','#f0f'][p.type];
+    ctx.fillRect(p.x,p.y,p.w,p.h);
+  });
+
+  // particles
+  particles.forEach(p=>{ctx.fillStyle=p.col; ctx.fillRect(p.x,p.y,3,3);});
+
+  // HUD
+  document.getElementById('hud').textContent=`Score: ${score}  Lives: ${player.lives}  Power: ${['Single','Double','Triple','Spread'][player.power]}`;
+  if(gameOver){
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.font='48px monospace'; ctx.textAlign='center';
+    ctx.fillText('GAME OVER',W/2,H/2);
+    ctx.font='20px monospace'; ctx.fillText('Press R to restart',W/2,H/2+40);
+  }
+}
+
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
+
+addEventListener('keydown',e=>{ if(e.code==='KeyR') reset(); });
+</script>
+</body>
+</html>

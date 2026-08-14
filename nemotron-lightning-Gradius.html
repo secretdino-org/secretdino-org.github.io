@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Gradius Clone</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; overflow:hidden; font-family:sans-serif; }
+#ui { position:absolute; top:20px; color:#fff; background:rgba(0,0,0,0.6); padding:12px 20px; border-radius:8px; backdrop-filter:blur(4px); }
+canvas { cursor:crosshair; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <span>Score: <b id="s">0</b></span>
+  <span style="margin-left:20px;">Lives: <b id="l">3</b></span>
+</div>
+<canvas id="c"></canvas>
+
+<script>
+const CANVAS_W = window.innerWidth;
+const CANVAS_H = window.innerHeight;
+const PLAYER_SPEED = 4;
+const BULLET_SPEED = 6;
+const ENEMY_SPAWN_RATE = 30;
+const ENEMY_BULLET_SPEED = 3;
+const COOLDOWN = 15;
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+c.width = CANVAS_W;
+c.height = CANVAS_H;
+
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let frame = 0;
+
+// Player
+const player = {
+  x: CANVAS_W / 2 - 20,
+  y: CANVAS_H - 50,
+  w: 40,
+  h: 20,
+  speed: PLAYER_SPEED,
+  bullets: [],
+  shootTimer: 0,
+  draw() {
+    ctx.fillStyle = '#0f0';
+    ctx.beginPath();
+    ctx.moveTo(this.x + this.w/2, this.y);
+    ctx.lineTo(this.x, this.y + this.h);
+    ctx.lineTo(this.x + this.w, this.y + this.h);
+    ctx.closePath();
+    ctx.fill();
+  }
+};
+
+let bgY = 0; // background scroll y-position
+
+const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false, Space:false };
+window.addEventListener('keydown', e => { if(e.key in keys) keys[e.key]=true; });
+window.addEventListener('keyup', e => { if(e.key in keys) keys[e.key]=false; });
+
+function spawnEnemy() {
+  const w = 30 + Math.random()*30;
+  const h = 20 + Math.random()*20;
+  const x = Math.max(0, Math.min(CANVAS_W - w, Math.random()*(CANVAS_W - w)));
+  return {
+    x, y: -h, w, h,
+    dy: 1 + Math.random()*1.5,
+    bullets: [],
+    shootTimer: 0,
+    draw() {
+      ctx.fillStyle = 'hsl(' + (frame%360) + ',70%,55%)';
+      ctx.fillRect(this.x, this.y, this.w, this.h);
+      if(this.shootTimer++ > 90) {
+        this.bullets.push({x:this.x+this.w/2, y:this.y+this.h, dy:ENEMY_BULLET_SPEED});
+        this.shootTimer = 0;
+      }
+    }
+  };
+}
+
+function drawBG() {
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+  for(let i=0;i<50;i++) {
+    const s = Math.random()*2+0.5;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(Math.random()*CANVAS_W, Math.random()*CANVAS_H, s, 0, Math.PI*2);
+    ctx.fill();
+  }
+  bgY = (bgY + 1) % CANVAS_H;
+  ctx.fillStyle = 'rgba(0,255,0,0.03)';
+  ctx.fillRect(0, bgY - CANVAS_H, CANVAS_W, CANVAS_H);
+  ctx.fillRect(0, bgY, CANVAS_W, CANVAS_H);
+}
+
+function updateBullets() {
+  // Player bullets
+  for(let i = player.bullets.length-1; i>=0; i--) {
+    const b = player.bullets[i];
+    b.y -= BULLET_SPEED;
+    if(b.y < -10) { player.bullets.splice(i,1); continue; }
+    for(let j=enemies.length-1; j>=0; j--) {
+      const e = enemies[j];
+      if(e.x < b.x + 4 && e.x + e.w > b.x - 4 && e.y < b.y + 4 && e.y + e.h > b.y - 4) {
+        enemies.splice(j,1);
+        player.bullets.splice(i,1);
+        score += 10;
+      }
+    }
+  }
+  // Enemy bullets
+  for(let i=enemies.length-1; i>=0; i--) {
+    const e = enemies[i];
+    for(let j=e.bullets.length-1; j>=0; j--) {
+      const b = e.bullets[j];
+      b.y += ENEMY_BULLET_SPEED;
+      if(b.y > CANVAS_H + 10) { e.bullets.splice(j,1); continue; }
+      if(b.x < player.x + player.w && b.x + 4 > player.x && b.y < player.y + player.h && b.y + 4 > player.y) {
+        lives--;
+        e.bullets = [];
+        if(lives <= 0) gameOver = true;
+      }
+      e.bullets[j] = b;
+    }
+    e.bullets = e.bullets.filter(b => b.y <= CANVAS_H + 10);
+  }
+  player.bullets = player.bullets.filter(b => b.y > -10);
+}
+
+function loop() {
+  if(gameOver) return;
+  
+  frame++;
+  drawBG();
+
+  if(keys.ArrowLeft) player.x = Math.max(0, player.x - player.speed);
+  if(keys.ArrowRight) player.x = Math.min(CANVAS_W - player.w, player.x + player.speed);
+  if(keys.Space && player.shootTimer >= COOLDOWN) {
+    player.bullets.push({x: player.x + player.w/2, y: player.y, dy: -BULLET_SPEED});
+    player.shootTimer = 0;
+  }
+  player.shootTimer++;
+
+  player.draw();
+  player.bullets.forEach(b => { ctx.fillStyle='#fff'; ctx.fillRect(b.x,b.y,4,12); });
+
+  if(frame % ENEMY_SPAWN_RATE === 0) enemies.push(spawnEnemy());
+
+  // Keep only enemies on-screen (or slightly off, for cleanup)
+  enemies = enemies.filter(e => e.y < CANVAS_H + e.h && e.y > -e.h);
+  enemies.forEach(e => {
+    e.y += e.dy;
+    e.draw();
+    e.bullets.forEach(b => {
+      ctx.fillStyle='orange';
+      ctx.fillRect(b.x,b.y,6,12);
+    });
+    if(e.shootTimer++ > 120) {
+      e.bullets.push({x:e.x+e.w/2, y:e.y+e.h, dy:ENEMY_BULLET_SPEED});
+      e.shootTimer = 0;
+    }
+  });
+
+  updateBullets();
+
+  document.getElementById('s').innerText = score;
+  document.getElementById('l').innerText = lives;
+
+  requestAnimationFrame(loop);
+}
+
+// ⚠️ FIX: changed 'const' to 'let' so the array can be reassigned below
+let enemies = [];
+
+loop();
+
+window.addEventListener('resize', () => {
+  CANVAS_W = window.innerWidth;
+  CANVAS_H = window.innerHeight;
+  c.width = CANVAS_W;
+  c.height = CANVAS_H;
+});
+</script>
+</body>
+</html>

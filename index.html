@@ -1,63 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecretDino Blog - Starting Game Development</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom font for a slightly more unique look */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qwen3.8-27B — Gradius Benchmark Results</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #1a1f35;
+      --card-border: #2c3354;
+      --text: #e8ebf5;
+      --muted: #9aa3c0;
+      --accent: #6ea8fe;
+      --accent-soft: rgba(110, 168, 254, 0.15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1.25rem;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 1.9rem;
+      margin: 0 0 0.5rem;
+    }
+
+    header p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.35rem 0.9rem;
+      font-size: 0.95rem;
+    }
+
+    .meta dt {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .meta dd {
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 0.1rem 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .notes-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.4rem;
+    }
+
+    .open-link {
+      align-self: flex-start;
+      display: inline-block;
+      background: var(--accent);
+      color: #0b0e1a;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 8px;
+      padding: 0.55rem 1.1rem;
+      transition: filter 0.15s ease;
+    }
+
+    .open-link:hover {
+      filter: brightness(1.12);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 2.5rem;
+    }
+  </style>
 </head>
-<body class="antialiased">
-    <div class="min-h-screen flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <header class="w-full max-w-4xl mb-10 text-center"><img src = "secretdino.png" />
-            <h1 class="text-5xl font-extrabold text-purple-800 mb-4 rounded-lg p-2 bg-gradient-to-r from-blue-400 to-purple-600 text-white shadow-lg">
-                SecretDino
-            </h1>
-            <p class="text-lg text-gray-700">Adventures in the making</p>
-        </header>
+<body>
+  <div class="container">
+    <header>
+      <h1>Gradius Benchmark Results</h1>
+      <p>
+        Run outputs from different models on the Gradius benchmark.
+        Open a run to view the full results, and jot your notes in the
+        Notes section of each card.
+      </p>
+    </header>
 
-        <!-- Blog Post Section -->
-        <main class="w-full max-w-3xl bg-white rounded-xl shadow-lg overflow-hidden">
-            <article class="p-6 sm:p-8 lg:p-10">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                    Embarking on the Game Development Journey!
-                </h2>
-                <div class="flex items-center text-sm text-gray-600 mb-6">
-                    <span class="mr-3">By <span class="font-semibold text-blue-600">A Secret Dino</span></span>
-                    <span>July 30, 2025</span>
-                </div>
+    <main class="cards">
+      <!-- High Reasoning -->
+      <section class="card">
+        <h2>Gradius Run — Qwen3.8-27B High Reasoning</h2>
+        <dl class="meta">
+          <dt>Model:</dt><dd>Qwen3.8-27B</dd>
+          <dt>Quant:</dt><dd>Unsloth Qwen3.8-27B-UD-Q8_K_XL</dd>
+          <dt>Reasoning:</dt><dd><span class="badge">High</span></dd>
+          <dt>Benchmark:</dt><dd>Gradius</dd>
+        </dl>
+        <div>
+          <div class="notes-label">Notes</div>
+          <dl class="meta">
+            <dt>Prompt:</dt><dd>Write a single page html canvas gradius clone</dd>
+            <dt>Output Tokens:</dt><dd>34,407</dd>
+            <dt>Speed:</dt><dd>24 t/s (part of the time 2 other sessions were running)</dd>
+            <dt>Processing Time:</dt><dd>23 minutes</dd>
+            <dt>Turns:</dt><dd>1 — initial output is what you see here</dd>
+          </dl>
+        </div>
+        <a class="open-link" href="qwen3.8-27b-HighReasoning-Gradius.html">Open results →</a>
+      </section>
 
-                <div class="prose prose-lg text-gray-800 leading-relaxed">
-                    <p class="mb-4">
-                        Hello everyone and welcome to the very first post on the SecretDino blog! Today marks an exciting new chapter for me: officially diving headfirst into the world of game development. For a long time, I've been fascinated by the intricate mechanics, captivating stories, and immersive experiences that video games offer. Now, it's time to try my hand at creating them.
-                    </p>
-                    <p class="mb-4">
-                        My journey will start with learning the fundamentals. I plan to explore various game engines, starting with beginner-friendly Godot and then diving straight into Unreal Engine . The initial focus will be on understanding core concepts such as game loops, physics, rendering, and input handling.
-                    </p>
-                    <p class="mb-4">
-                        I'll be documenting my progress, challenges, and successes right here. Expect posts about my learning resources, small prototypes, design ideas, and maybe even some early artwork. It's going to be a steep learning curve, but I'm incredibly excited about the creative possibilities. Wish me luck, and stay tuned for more updates on this thrilling adventure!
-                    </p>
-                    <p>
-                        What kind of games do you enjoy playing? Let me know in the comments (if I ever add them!).
-                    </p>
-                </div>
-            </article>
-        </main>
+      <!-- Medium Reasoning -->
+      <section class="card">
+        <h2>Gradius Run — Qwen3.8-27B Medium Reasoning</h2>
+        <dl class="meta">
+          <dt>Model:</dt><dd>Qwen3.8-27B</dd>
+          <dt>Quant:</dt><dd>Unsloth Qwen3.8-27B-UD-Q8_K_XL</dd>
+          <dt>Reasoning:</dt><dd><span class="badge">Medium</span></dd>
+          <dt>Benchmark:</dt><dd>Gradius</dd>
+        </dl>
+        <div>
+          <div class="notes-label">Notes</div>
+          <dl class="meta">
+            <dt>Prompt:</dt><dd>Create a single page Gradius clone</dd>
+            <dt>Output Tokens:</dt><dd>24,923</dd>
+            <dt>Speed:</dt><dd>21.4 t/s (while running 2 other sessions)</dd>
+            <dt>Processing Time:</dt><dd>19.5 minutes</dd>
+            <dt>Turns:</dt><dd>3 — first turn had a javascript issue, second the weapons were firing backwards. Third turn is what's here</dd>
+          </dl>
+        </div>
+        <a class="open-link" href="qwen3.8-27b-MediumReasoning-Gradius.html">Open results →</a>
+      </section>
 
-        <!-- Footer Section -->
-        <footer class="w-full max-w-4xl mt-10 text-center text-gray-600 text-sm">
-            <p>&copy; 2025 SecretDino.org. All rights reserved.</p>
-        </footer>
-    </div>
+      <!-- Muse-Glimmer -->
+      <section class="card">
+        <h2>Gradius Run — Muse-Glimmer-30B</h2>
+        <dl class="meta">
+          <dt>Model:</dt><dd>Muse-Glimmer-30B</dd>
+          <dt>Quant:</dt><dd>Unsloth Muse-Glimmer-30B-UD-Q8_K_XL.gguf</dd>
+          <dt>Benchmark:</dt><dd>Gradius</dd>
+        </dl>
+        <div>
+          <div class="notes-label">Notes</div>
+          <dl class="meta">
+            <dt>Speed:</dt><dd>43.43 t/s</dd>
+            <dt>Turns:</dt><dd>1</dd>
+          </dl>
+        </div>
+        <a class="open-link" href="glimmer-30b-Gradius.html">Open results →</a>
+      </section>
+
+      <!-- Nemotron-Lightning -->
+      <section class="card">
+        <h2>Gradius Run — Nemotron-Lightning</h2>
+        <dl class="meta">
+          <dt>Model:</dt><dd>NVIDIA Nemotron 3.5 Lightning 30B A3B</dd>
+          <dt>Quant:</dt><dd>Unsloth Nemotron-3.5-Lightning-30B-A3B-UD-Q8_K_XL.gguf</dd>
+          <dt>Benchmark:</dt><dd>Gradius</dd>
+        </dl>
+        <div>
+          <div class="notes-label">Notes</div>
+          <dl class="meta">
+            <dt>Speed:</dt><dd>77.9 t/s</dd>
+            <dt>Turns:</dt><dd>3 — error on first turn. Second turn had no errors but didn't work. Third turn: it moves too fast to play, and I don't think the input works. I just see stars zooming past at light speed</dd>
+          </dl>
+        </div>
+        <a class="open-link" href="nemotron-lightning-Gradius.html">Open results →</a>
+      </section>
+
+      <!-- Qwen3.6-35B -->
+      <section class="card">
+        <h2>Gradius Run — Qwen3.6-35B</h2>
+        <dl class="meta">
+          <dt>Model:</dt><dd>Qwen3.6-35B-A3B</dd>
+          <dt>Quant:</dt><dd>Unsloth Qwen3.6-35B-A3B-Q8_0.gguf</dd>
+          <dt>Benchmark:</dt><dd>Gradius</dd>
+        </dl>
+        <div>
+          <div class="notes-label">Notes</div>
+          <dl class="meta">
+            <dt>Output Tokens:</dt><dd>9,227</dd>
+            <dt>Speed:</dt><dd>44.7 t/s</dd>
+            <dt>Processing Time:</dt><dd>3 min, 26 sec</dd>
+            <dt>Turns:</dt><dd>1, but shooting doesn't work</dd>
+          </dl>
+        </div>
+        <a class="open-link" href="qwen36.-35b-Gradius.html">Open results →</a>
+      </section>
+    </main>
+
+    <footer>Notes are written directly in this HTML file — edit the Notes sections above to update them.</footer>
+  </div>
 </body>
 </html>
-
